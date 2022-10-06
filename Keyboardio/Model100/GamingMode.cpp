@@ -31,7 +31,7 @@ namespace kaleidoscope {
   EventHandlerResult GamingMode::beforeReportingState(const KeyEvent &event) {
     if (Layer.isActive(gamingLayer)) {
       ::SpaceCadet.disable();
-      setGamingColors();
+      // setGamingColors();
     } else {
       ::SpaceCadet.enable();
     }
