@@ -117,6 +117,7 @@
 enum {
   MACRO_VERSION_INFO,
   MACRO_ANY,
+  MACRO_LED_TOGGLE
 };
 
 
@@ -255,7 +256,7 @@ KEYMAPS(
 #elif defined (PRIMARY_KEYMAP_CUSTOM)
   // Edit this keymap to make a custom layout
   [PRIMARY] = KEYMAP_STACKED
-  (___,          Key_1, Key_2, Key_3, Key_4, Key_5, Key_LEDEffectNext,
+  (___,          Key_1, Key_2, Key_3, Key_4, Key_5, M(MACRO_LED_TOGGLE),
    Key_Backtick, Key_Q, Key_W, Key_E, Key_R, Key_T, Key_Tab,
    Key_PageUp,   Key_A, Key_S, Key_D, Key_F, Key_G,
    Key_PageDown, Key_Z, Key_X, Key_C, Key_V, Key_B, Key_Escape,
@@ -352,6 +353,19 @@ static void anyKeyMacro(KeyEvent &event) {
   }
 }
 
+static uint8_t lastLedMode = 255;
+
+static void ledToggleMacro(uint8_t key_state) {
+  if (keyToggledOn(key_state)) {
+    if (LEDControl.get_mode() != &LEDOff) {
+      lastLedMode = LEDControl.get_mode_index();
+      LEDOff.activate();
+    } else if (lastLedMode != 255) {
+      LEDControl.set_mode(lastLedMode);
+    }
+  }
+}
+
 
 /** macroAction dispatches keymap events that are tied to a macro
     to that macro. It takes two uint8_t parameters.
@@ -367,15 +381,19 @@ static void anyKeyMacro(KeyEvent &event) {
 
 const macro_t *macroAction(uint8_t macro_id, KeyEvent &event) {
   switch (macro_id) {
+    case MACRO_VERSION_INFO:
+      versionInfoMacro(event.state);
+      break;
 
-  case MACRO_VERSION_INFO:
-    versionInfoMacro(event.state);
-    break;
+    case MACRO_ANY:
+      anyKeyMacro(event);
+      break;
 
-  case MACRO_ANY:
-    anyKeyMacro(event);
-    break;
+    case MACRO_LED_TOGGLE:
+      ledToggleMacro(event.state);
+      break;
   }
+
   return MACRO_NONE;
 }
 
@@ -554,10 +572,10 @@ KALEIDOSCOPE_INIT_PLUGINS(
 
   // The LED Palette Theme plugin provides a shared palette for other plugins,
   // like Colormap below
-  //LEDPaletteTheme,
+  LEDPaletteTheme,
 
   // The Colormap effect makes it possible to set up per-layer colormaps
-  //ColormapEffect,
+  ColormapEffect,
 
   // The numpad plugin is responsible for lighting up the 'numpad' mode
   // with a custom LED effect
@@ -698,7 +716,7 @@ void setup() {
   };
   SpaceCadet.setMap(spacecadetmap);
 
-  GamingMode.gamingLayer = GAMING;
+  GamingMode.setGamingLayer(GAMING);
 }
 
 /** loop is the second of the standard Arduino sketch functions.
